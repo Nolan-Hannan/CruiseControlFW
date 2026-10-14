@@ -70,6 +70,8 @@ void Error_Handler(void);
 #define MODE_SWITCH_GPIO_Port GPIOA
 #define MUX_SEL_Pin GPIO_PIN_4
 #define MUX_SEL_GPIO_Port GPIOA
+#define SPI2_SCSN_Pin GPIO_PIN_2
+#define SPI2_SCSN_GPIO_Port GPIOB
 #define CAN2_RX_HV_Pin GPIO_PIN_12
 #define CAN2_RX_HV_GPIO_Port GPIOB
 #define CAN2_TX_HV_Pin GPIO_PIN_13
@@ -84,6 +86,12 @@ void Error_Handler(void);
 #define CAN1_RX_LV_GPIO_Port GPIOA
 #define CAN1_TX_LV_Pin GPIO_PIN_12
 #define CAN1_TX_LV_GPIO_Port GPIOA
+#define SPI1_SCSN_FLASH_Pin GPIO_PIN_3
+#define SPI1_SCSN_FLASH_GPIO_Port GPIOB
+#define SPI1_SCSN_DAC_Pin GPIO_PIN_4
+#define SPI1_SCSN_DAC_GPIO_Port GPIOB
+#define SPI1_SCSN_IMU_Pin GPIO_PIN_5
+#define SPI1_SCSN_IMU_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
