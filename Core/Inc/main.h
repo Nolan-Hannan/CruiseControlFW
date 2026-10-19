@@ -82,6 +82,8 @@ void Error_Handler(void);
 #define GREEN_GPIO_Port GPIOC
 #define RED_Pin GPIO_PIN_9
 #define RED_GPIO_Port GPIOC
+#define RESET_INFO_DAC_Pin GPIO_PIN_8
+#define RESET_INFO_DAC_GPIO_Port GPIOA
 #define CAN1_RX_LV_Pin GPIO_PIN_11
 #define CAN1_RX_LV_GPIO_Port GPIOA
 #define CAN1_TX_LV_Pin GPIO_PIN_12
