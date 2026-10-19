@@ -21,6 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "cc_state.h"
+#include "cc_inputs.h"
 
 /* USER CODE END Includes */
 
@@ -51,6 +53,18 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+
+/* Development assumption: all CC input GPIOs are active-high. */
+static const cc_inputs_config_t cc_input_config = {
+    .mode_active_level = CC_INPUT_ACTIVE_HIGH,
+    .brake_active_level = CC_INPUT_ACTIVE_HIGH,
+    .forward_active_level = CC_INPUT_ACTIVE_HIGH,
+    .reverse_active_level = CC_INPUT_ACTIVE_HIGH,
+    .forward_rule = CC_FORWARD_REQUIRED,
+    /* TODO: Select the button, set its debounce interval, then enable it. */
+    .mode_button_enabled = false,
+    .mode_debounce_ms = 0U
+};
 
 /* USER CODE END PV */
 
@@ -107,8 +121,13 @@ int main(void)
   MX_SPI2_Init();
   MX_TIM2_Init();
   MX_USART1_UART_Init();
-  /* USER CODE BEGIN 2 */
 
+  /* USER CODE BEGIN 2 */
+  cc_state_init();            // Initialize cc state
+  if (!cc_inputs_init(&cc_input_config))
+  {
+    Error_Handler();
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -118,6 +137,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    cc_inputs_t inputs = cc_inputs_update();
+    cc_state_update(inputs.mode_pressed, inputs.cruise_allowed);
   }
   /* USER CODE END 3 */
 }

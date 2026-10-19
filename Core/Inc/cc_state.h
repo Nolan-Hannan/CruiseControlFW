@@ -3,10 +3,8 @@
  * typedef names the enum cc_state_t for use in variables and functions.
  * The enum identifies states; transition logic belongs in cc_state.c.
  * cc_state_init() initializes to OFF; cc_state_get() returns the state.
- * Include guards prevent repeated inclusion within a source file.
- * extern "C" allows these C functions to be called from C++.
  */
-
+#include <stdbool.h>
 #ifndef CC_STATE_H
 #define CC_STATE_H
 
@@ -27,6 +25,8 @@ void cc_state_init(void);
 
 /** Return the current cruise-control state. */
 cc_state_t cc_state_get(void);
+
+void cc_state_update(bool mode_pressed, bool cruise_allowed);
 
 #ifdef __cplusplus
 }
