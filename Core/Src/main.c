@@ -54,7 +54,9 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 
-/* Development assumption: all CC input GPIOs are active-high. */
+/* Confirmed active-high: BRAKE, FORWARD, and REVERSE.
+ * MODE_SWITCH polarity is still an assumption; button processing is disabled.
+ */
 static const cc_inputs_config_t cc_input_config = {
     .mode_active_level = CC_INPUT_ACTIVE_HIGH,
     .brake_active_level = CC_INPUT_ACTIVE_HIGH,
@@ -121,7 +123,6 @@ int main(void)
   MX_SPI2_Init();
   MX_TIM2_Init();
   MX_USART1_UART_Init();
-
   /* USER CODE BEGIN 2 */
   cc_state_init();            // Initialize cc state
   if (!cc_inputs_init(&cc_input_config))
