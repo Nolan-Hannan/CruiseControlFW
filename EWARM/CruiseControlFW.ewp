@@ -1089,6 +1089,9 @@
           <name>$PROJ_DIR$/../Core/Src/cc_inputs.c</name>
         </file>
         <file>
+          <name>$PROJ_DIR$/../Core/Src/cc_control.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$/../Core/Src/stm32f4xx_it.c</name>
         </file>
         <file>
