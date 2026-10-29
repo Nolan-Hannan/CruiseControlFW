@@ -451,17 +451,11 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SPI1_SCSN_FLASH_Pin|SPI1_SCSN_DAC_Pin|SPI1_SCSN_IMU_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : BRAKE_Pin FORWARD_Pin REVERSE_Pin */
-  GPIO_InitStruct.Pin = BRAKE_Pin|FORWARD_Pin|REVERSE_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : MODE_SWITCH_Pin */
-  GPIO_InitStruct.Pin = MODE_SWITCH_Pin;
+  /*Configure GPIO pins : BRAKE_Pin FORWARD_Pin REVERSE_Pin MODE_SWITCH_Pin */
+  GPIO_InitStruct.Pin = BRAKE_Pin|FORWARD_Pin|REVERSE_Pin|MODE_SWITCH_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(MODE_SWITCH_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MUX_SEL_Pin */
   GPIO_InitStruct.Pin = MUX_SEL_Pin;
