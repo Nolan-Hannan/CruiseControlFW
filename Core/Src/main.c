@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "cc_state.h"
 #include "cc_inputs.h"
+#include "cc_control.h"
 
 /* USER CODE END Includes */
 
@@ -63,9 +64,9 @@ static const cc_inputs_config_t cc_input_config = {
     .forward_active_level = CC_INPUT_ACTIVE_HIGH,
     .reverse_active_level = CC_INPUT_ACTIVE_HIGH,
     .forward_rule = CC_FORWARD_REQUIRED,
-    /* TODO: Select the button, set its debounce interval, then enable it. */
+    /* TODO: Confirm button wiring/polarity and validate 20 ms before enabling. */
     .mode_button_enabled = false,
-    .mode_debounce_ms = 0U
+    .mode_debounce_ms = 20U
 };
 
 /* USER CODE END PV */
@@ -125,6 +126,7 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   cc_state_init();            // Initialize cc state
+  cc_control_init();
   if (!cc_inputs_init(&cc_input_config))
   {
     Error_Handler();
@@ -138,8 +140,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    /* TODO: Replace these placeholders with valid, recent speed feedback. */
+    const float measured_speed_mps = 0.0f;
+    const bool speed_valid = false;
+
     cc_inputs_t inputs = cc_inputs_update();
-    cc_state_update(inputs.mode_pressed, inputs.cruise_allowed);
+    cc_state_update(inputs.mode_pressed,
+                    inputs.cruise_allowed && speed_valid);
+    cc_control_update(cc_state_get(), measured_speed_mps, speed_valid);
   }
   /* USER CODE END 3 */
 }
