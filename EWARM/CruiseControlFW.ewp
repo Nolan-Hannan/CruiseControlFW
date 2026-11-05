@@ -354,7 +354,7 @@
           <state>$PROJ_DIR$/../Core/Inc</state>
           <state>$PROJ_DIR$/../Core/Inc/CruiseControl</state>
           <state>$PROJ_DIR$/../Core/Inc/PowerOptimization</state>
-          <state>$PROJ_DIR$/../Core/Inc/BSP</state>
+          <state>$PROJ_DIR$/../Core/Inc/SysLib</state>
           <state>$PROJ_DIR$/../Drivers/STM32F4xx_HAL_Driver/Inc</state>
           <state>$PROJ_DIR$/../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy</state>
           <state>$PROJ_DIR$/../Drivers/CMSIS/Device/ST/STM32F4xx/Include</state>
