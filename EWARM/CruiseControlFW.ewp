@@ -1104,6 +1104,36 @@
           <name>$PROJ_DIR$/../Core/Src/CruiseControl/cc_control.c</name>
         </file>
       </group>
+      <group>
+        <name>SysLib</name>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_can.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_cc_dac.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_flash.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_gpio.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_imu.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_info_dac.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_spi.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_time.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_uart.c</name>
+        </file>
+      </group>
     </group>
   </group>
   <group>
