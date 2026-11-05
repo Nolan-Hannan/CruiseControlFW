@@ -3,6 +3,7 @@
  */
 
 #include "cc_control.h"
+#include "main.h"
 
 // Initialize private variables
 static cc_state_t previous_state;
@@ -65,7 +66,7 @@ void cc_control_update(cc_state_t state, float measured_speed_mps,
                 integral = -3.3f;
             }
 
-            output =  1 * error + 1 * integral; //we will have to update this with a real output variable
+            float output =  1 * error + 1 * integral; //we will have to update this with a real output variable
 
 
             break;
