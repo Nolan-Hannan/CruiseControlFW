@@ -14,3 +14,6 @@ Release/
 
 # CubeMX generated temp files
 *.mxproject
+
+# Local progress journal
+/PROGRESS.md

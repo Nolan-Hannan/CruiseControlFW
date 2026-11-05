@@ -21,6 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "cc_state.h"
+#include "cc_inputs.h"
+#include "cc_control.h"
 
 /* USER CODE END Includes */
 
@@ -51,6 +54,20 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+
+/* Confirmed active-high: BRAKE, FORWARD, and REVERSE.
+ * MODE_SWITCH polarity is still an assumption; button processing is disabled.
+ */
+static const cc_inputs_config_t cc_input_config = {
+    .mode_active_level = CC_INPUT_ACTIVE_HIGH,
+    .brake_active_level = CC_INPUT_ACTIVE_HIGH,
+    .forward_active_level = CC_INPUT_ACTIVE_HIGH,
+    .reverse_active_level = CC_INPUT_ACTIVE_HIGH,
+    .forward_rule = CC_FORWARD_REQUIRED,
+    /* TODO: Confirm button wiring/polarity and validate 20 ms before enabling. */
+    .mode_button_enabled = false,
+    .mode_debounce_ms = 20U
+};
 
 /* USER CODE END PV */
 
@@ -108,7 +125,12 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  cc_state_init();            // Initialize cc state
+  cc_control_init();
+  if (!cc_inputs_init(&cc_input_config))
+  {
+    Error_Handler();
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -118,6 +140,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    /* TODO: Replace these placeholders with valid, recent speed feedback. */
+    const float measured_speed_mps = 0.0f;
+    const bool speed_valid = false;
+
+    cc_inputs_t inputs = cc_inputs_update();
+    cc_state_update(inputs.mode_pressed,
+                    inputs.cruise_allowed && speed_valid);
+    cc_control_update(cc_state_get(), measured_speed_mps, speed_valid);
   }
   /* USER CODE END 3 */
 }
@@ -429,17 +459,11 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SPI1_SCSN_FLASH_Pin|SPI1_SCSN_DAC_Pin|SPI1_SCSN_IMU_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : BRAKE_Pin FORWARD_Pin REVERSE_Pin */
-  GPIO_InitStruct.Pin = BRAKE_Pin|FORWARD_Pin|REVERSE_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : MODE_SWITCH_Pin */
-  GPIO_InitStruct.Pin = MODE_SWITCH_Pin;
+  /*Configure GPIO pins : BRAKE_Pin FORWARD_Pin REVERSE_Pin MODE_SWITCH_Pin */
+  GPIO_InitStruct.Pin = BRAKE_Pin|FORWARD_Pin|REVERSE_Pin|MODE_SWITCH_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(MODE_SWITCH_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MUX_SEL_Pin */
   GPIO_InitStruct.Pin = MUX_SEL_Pin;
