@@ -68,7 +68,6 @@ void Error_Handler(void);
 #define REVERSE_EXTI_IRQn EXTI2_IRQn
 #define MODE_SWITCH_Pin GPIO_PIN_3
 #define MODE_SWITCH_GPIO_Port GPIOA
-#define MODE_SWITCH_EXTI_IRQn EXTI3_IRQn
 #define MUX_SEL_Pin GPIO_PIN_4
 #define MUX_SEL_GPIO_Port GPIOA
 #define SPI2_SCSN_Pin GPIO_PIN_2
