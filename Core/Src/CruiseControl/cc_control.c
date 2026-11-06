@@ -3,7 +3,7 @@
  */
 
 #include "cc_control.h"
-#include "main.h"
+#include "sys_time.h"
 
 // Initialize private variables
 static cc_state_t previous_state;
@@ -45,12 +45,12 @@ void cc_control_update(cc_state_t state, float measured_speed_mps,
                 target_speed_mps = measured_speed_mps;
                 current_speed_mps = measured_speed_mps;
                 target_valid     = true;
-                prev_time = HAL_GetTick();
+                prev_time = sys_getTimeMs();
                 break;
             }
             past_speed_mps = current_speed_mps;
             current_speed_mps = measured_speed_mps;
-            uint32_t cur_time = HAL_GetTick();
+            uint32_t cur_time = sys_getTimeMs();
             float delta_t = (cur_time - prev_time)/1000;
             prev_time = cur_time;
 

@@ -7,7 +7,8 @@
  */
 
 #include "cc_inputs.h"
-#include "main.h"
+#include "sys_gpio.h"
+#include "sys_time.h"
 
 #include <stddef.h>
 
@@ -28,14 +29,10 @@ static bool input_active(bool pin_high, cc_input_active_level_t level) {
 static cc_inputs_raw_t read_raw_inputs(void) {
     cc_inputs_raw_t raw;
 
-    raw.mode_high = HAL_GPIO_ReadPin(MODE_SWITCH_GPIO_Port,
-                                     MODE_SWITCH_Pin) == GPIO_PIN_SET;
-    raw.brake_high = HAL_GPIO_ReadPin(BRAKE_GPIO_Port,
-                                      BRAKE_Pin) == GPIO_PIN_SET;
-    raw.forward_high = HAL_GPIO_ReadPin(FORWARD_GPIO_Port,
-                                        FORWARD_Pin) == GPIO_PIN_SET;
-    raw.reverse_high = HAL_GPIO_ReadPin(REVERSE_GPIO_Port,
-                                        REVERSE_Pin) == GPIO_PIN_SET;
+    raw.mode_high = sys_gpioGet(MODE_SWITCH) == HI;
+    raw.brake_high = sys_gpioGet(BRAKE) == HI;
+    raw.forward_high = sys_gpioGet(FORWARD) == HI;
+    raw.reverse_high = sys_gpioGet(REVERSE) == HI;
     return raw;
 }
 
@@ -59,9 +56,9 @@ bool cc_inputs_init(const cc_inputs_config_t *config) {
     input_config = *config;
     if (input_config.mode_button_enabled) {
         mode_candidate_pressed = input_active(
-            HAL_GPIO_ReadPin(MODE_SWITCH_GPIO_Port, MODE_SWITCH_Pin) == GPIO_PIN_SET,
+            sys_gpioGet(MODE_SWITCH) == HI,
             input_config.mode_active_level);
-        mode_candidate_since_ms = HAL_GetTick();
+        mode_candidate_since_ms = sys_getTimeMs();
     }
     configured = true;
     return true;
@@ -94,7 +91,7 @@ cc_inputs_t cc_inputs_update(void) {
 
     const bool mode_active = input_active(inputs.raw.mode_high,
                                           input_config.mode_active_level);
-    const uint32_t now_ms = HAL_GetTick();
+    const uint32_t now_ms = sys_getTimeMs();
 
     if (mode_active != mode_candidate_pressed) {
         mode_candidate_pressed = mode_active;
