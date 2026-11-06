@@ -6,8 +6,7 @@
 #ifndef CC_INPUTS_H
 #define CC_INPUTS_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include "defines.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,35 +31,35 @@ typedef struct {
     cc_input_active_level_t forward_active_level;
     cc_input_active_level_t reverse_active_level;
     cc_forward_rule_t forward_rule;
-    bool mode_button_enabled;
+    uint8_t mode_button_enabled;
     uint32_t mode_debounce_ms; /* Must be nonzero when the button is enabled. */
 } cc_inputs_config_t;
 
 /* Electrical pin levels, available even before configuration is supplied. */
 typedef struct {
-    bool mode_high;
-    bool brake_high;
-    bool forward_high;
-    bool reverse_high;
+    uint8_t mode_high;
+    uint8_t brake_high;
+    uint8_t forward_high;
+    uint8_t reverse_high;
 } cc_inputs_raw_t;
 
 typedef struct {
     cc_inputs_raw_t raw;
-    bool configured;
-    bool brake_active;
-    bool forward_active;
-    bool reverse_active;
-    bool mode_pressed;   /* One update per debounced press. */
-    bool cruise_allowed; /* GPIO permission only; excludes sensor validity. */
+    uint8_t configured;
+    uint8_t brake_active;
+    uint8_t forward_active;
+    uint8_t reverse_active;
+    uint8_t mode_pressed;   /* One update per debounced press. */
+    uint8_t cruise_allowed; /* GPIO permission only; excludes sensor validity. */
 } cc_inputs_t;
 
 /*
  * Call after GPIO initialization. Copies the configuration.
  * NULL, unknown levels/policy, or an enabled button with zero debounce time
- * return false. A disabled button generates no press events; GPIO safety still
+ * return FALSE. A disabled button generates no press events; GPIO safety still
  * works. An enabled, held button must be released before it can engage.
  */
-bool cc_inputs_init(const cc_inputs_config_t *config);
+uint8_t cc_inputs_init(const cc_inputs_config_t *config);
 
 /*
  * Poll from the main loop without blocking. Call even when cruise is OFF.

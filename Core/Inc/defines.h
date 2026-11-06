@@ -3,6 +3,8 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#include <stdint.h>
+
 #define LO 0
 #define HI 1
 

@@ -4,7 +4,6 @@
 #define SYS_SPI_H
 
 #include "defines.h"
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

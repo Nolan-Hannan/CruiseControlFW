@@ -4,7 +4,7 @@
  * The enum identifies states; transition logic belongs in cc_state.c.
  * cc_state_init() initializes to OFF; cc_state_get() returns the state.
  */
-#include <stdbool.h>
+#include "defines.h"
 #ifndef CC_STATE_H
 #define CC_STATE_H
 
@@ -26,7 +26,7 @@ void cc_state_init(void);
 /** Return the current cruise-control state. */
 cc_state_t cc_state_get(void);
 
-void cc_state_update(bool mode_pressed, bool cruise_allowed);
+void cc_state_update(uint8_t mode_pressed, uint8_t cruise_allowed);
 
 #ifdef __cplusplus
 }

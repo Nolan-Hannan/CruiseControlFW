@@ -68,7 +68,7 @@ static const cc_inputs_config_t cc_input_config = {
     .reverse_active_level = CC_INPUT_ACTIVE_HIGH,
     .forward_rule = CC_FORWARD_REQUIRED,
     /* TODO: Confirm button wiring/polarity and validate 20 ms before enabling. */
-    .mode_button_enabled = false,
+    .mode_button_enabled = FALSE,
     .mode_debounce_ms = 20U
 };
 
@@ -151,7 +151,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
     /* TODO: Replace these placeholders with valid, recent speed feedback. */
     const float measured_speed_mps = 0.0f;
-    const bool speed_valid = false;
+    const uint8_t speed_valid = FALSE;
 
     cc_inputs_t inputs = cc_inputs_update();
     cc_state_update(inputs.mode_pressed,
