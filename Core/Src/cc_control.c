@@ -50,7 +50,7 @@ void cc_control_update(cc_state_t state, float measured_speed_mps,
             past_speed_mps = current_speed_mps;
             current_speed_mps = measured_speed_mps;
             uint32_t cur_time = HAL_GetTick();
-            float delta_t = (cur_time - prev_time)/1000;
+            float delta_t = (cur_time - prev_time)/1000.0f;
             prev_time = cur_time;
 
             float error = target_speed_mps - current_speed_mps;
