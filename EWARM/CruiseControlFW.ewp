@@ -352,6 +352,9 @@
         <option>
           <name>CCIncludePath2</name>
           <state>$PROJ_DIR$/../Core/Inc</state>
+          <state>$PROJ_DIR$/../Core/Inc/CruiseControl</state>
+          <state>$PROJ_DIR$/../Core/Inc/PowerOptimization</state>
+          <state>$PROJ_DIR$/../Core/Inc/SysLib</state>
           <state>$PROJ_DIR$/../Drivers/STM32F4xx_HAL_Driver/Inc</state>
           <state>$PROJ_DIR$/../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy</state>
           <state>$PROJ_DIR$/../Drivers/CMSIS/Device/ST/STM32F4xx/Include</state>
@@ -1083,19 +1086,52 @@
           <name>$PROJ_DIR$/../Core/Src/main.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$/../Core/Src/cc_state.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$/../Core/Src/cc_inputs.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$/../Core/Src/cc_control.c</name>
-        </file>
-        <file>
           <name>$PROJ_DIR$/../Core/Src/stm32f4xx_it.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$/../Core/Src/stm32f4xx_hal_msp.c</name>
+        </file>
+      </group>
+      <group>
+        <name>CruiseControl</name>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/CruiseControl/cc_state.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/CruiseControl/cc_inputs.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/CruiseControl/cc_control.c</name>
+        </file>
+      </group>
+      <group>
+        <name>SysLib</name>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_can.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_cc_dac.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_flash.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_gpio.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_imu.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_info_dac.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_spi.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_time.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_uart.c</name>
         </file>
       </group>
     </group>
