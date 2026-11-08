@@ -499,7 +499,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(SPI2_SCSN_GPIO_Port, SPI2_SCSN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, BLUE_Pin|GREEN_Pin|RED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, BLUE_Pin|GREEN_Pin|RED_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(RESET_INFO_DAC_GPIO_Port, RESET_INFO_DAC_Pin, GPIO_PIN_SET);
