@@ -21,6 +21,7 @@ void sys_timerInit(sys_timer_t *timer);
 
 uint32_t sys_getTimeUs(void);
 uint32_t sys_getTimeMs(void);
+void sys_delayUs(uint32_t us);
 
 #ifdef __cplusplus
 }

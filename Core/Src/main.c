@@ -26,16 +26,36 @@
 #include "cc_control.h"
 #include "sys_uart.h"
 #include "sys_can.h"
+#include "sys_flash.h"
+#include "sys_cc_dac.h"
+#include "sys_info_dac.h"
+#include "sys_imu.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
+/* Init progress, readable in the debugger. A halt leaves the failing stage in initStage. */
+typedef enum {
+  STAGE_PERIPHERALS = 0,   /* Also the value if a CubeMX peripheral init failed. */
+  STAGE_UART,
+  STAGE_CAN,
+  STAGE_FLASH,
+  STAGE_CC_DAC,
+  STAGE_INFO_DAC,
+  STAGE_IMU,
+  STAGE_CC_INPUTS,
+  STAGE_RUNNING            /* All inits passed; the main loop stays on this value. */
+} initStage_t;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define INIT_STEP(stage, call) \
+  do { initStage = (stage); if (!(call)) { Error_Handler(); } } while (0)
 
 /* USER CODE END PD */
 
@@ -57,6 +77,8 @@ UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
+
+volatile initStage_t initStage = STAGE_PERIPHERALS;
 
 /* Confirmed active-high: BRAKE, FORWARD, and REVERSE.
  * MODE_SWITCH polarity is still an assumption; button processing is disabled.
@@ -130,16 +152,17 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  INIT_STEP(STAGE_UART, sys_uartInit());
+  INIT_STEP(STAGE_CAN, sys_canInit());
+  INIT_STEP(STAGE_FLASH, sys_flashInit());
+  INIT_STEP(STAGE_CC_DAC, sys_ccDacInit());
+  INIT_STEP(STAGE_INFO_DAC, sys_infoDacInit());
+  INIT_STEP(STAGE_IMU, sys_imuInit());
   cc_state_init();            // Initialize cc state
   cc_control_init();
-  if (!cc_inputs_init(&cc_input_config))
-  {
-    Error_Handler();
-  }
-  if (!sys_uartInit() || !sys_canInit())
-  {
-    Error_Handler();
-  }
+  INIT_STEP(STAGE_CC_INPUTS, cc_inputs_init(&cc_input_config));
+  initStage = STAGE_RUNNING;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */

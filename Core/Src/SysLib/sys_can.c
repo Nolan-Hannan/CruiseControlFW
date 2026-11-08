@@ -27,15 +27,15 @@ static sys_canBus_t busOf(CAN_HandleTypeDef *hcan) {
 }
 
 static uint8_t setAcceptAll(CAN_HandleTypeDef *hcan, uint32_t bank) {
-	CAN_FilterTypeDef f = {0};
+	CAN_FilterTypeDef filter = {0};
 
-	f.FilterBank = bank;
-	f.FilterMode = CAN_FILTERMODE_IDMASK;
-	f.FilterScale = CAN_FILTERSCALE_32BIT;
-	f.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-	f.FilterActivation = ENABLE;
-	f.SlaveStartFilterBank = SLAVE_START_BANK;
-	return HAL_CAN_ConfigFilter(hcan, &f) == HAL_OK;
+	filter.FilterBank = bank;
+	filter.FilterMode = CAN_FILTERMODE_IDMASK;
+	filter.FilterScale = CAN_FILTERSCALE_32BIT;
+	filter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+	filter.FilterActivation = ENABLE;
+	filter.SlaveStartFilterBank = SLAVE_START_BANK;
+	return HAL_CAN_ConfigFilter(hcan, &filter) == HAL_OK;
 }
 
 static uint8_t startBus(CAN_HandleTypeDef *hcan) {
@@ -57,13 +57,13 @@ uint8_t sys_canRead(sys_canBus_t bus, sys_canFrame_t *frame) {
 	if (bus >= SYS_CAN_BUS_COUNT || frame == NULL) {
 		return FALSE;
 	}
-	ring_t *r = &rings[bus];
-	if (r->tail == r->head) {
+	ring_t *ring = &rings[bus];
+	if (ring->tail == ring->head) {
 		return FALSE;
 	}
-	*frame = r->frames[r->tail];
+	*frame = ring->frames[ring->tail];
 	__DMB();
-	r->tail = (uint8_t)((r->tail + 1U) & RING_MASK);
+	ring->tail = (uint8_t)((ring->tail + 1U) & RING_MASK);
 	return TRUE;
 }
 
@@ -73,27 +73,27 @@ uint32_t sys_canDropped(sys_canBus_t bus) {
 
 /* All CAN interrupts share one priority, so each ring has a single producer at a time. */
 static void drain(CAN_HandleTypeDef *hcan, uint32_t fifo) {
-	ring_t *r = &rings[busOf(hcan)];
-	CAN_RxHeaderTypeDef hdr;
-	uint8_t data[8];
+	ring_t *ring = &rings[busOf(hcan)];
+	CAN_RxHeaderTypeDef rxHeader;
+	uint8_t rxData[8];
 
 	while (HAL_CAN_GetRxFifoFillLevel(hcan, fifo) > 0U) {
-		if (HAL_CAN_GetRxMessage(hcan, fifo, &hdr, data) != HAL_OK) {
+		if (HAL_CAN_GetRxMessage(hcan, fifo, &rxHeader, rxData) != HAL_OK) {
 			break;
 		}
-		uint8_t next = (uint8_t)((r->head + 1U) & RING_MASK);
-		if (next == r->tail) {
-			r->dropped++;
+		uint8_t nextHead = (uint8_t)((ring->head + 1U) & RING_MASK);
+		if (nextHead == ring->tail) {
+			ring->dropped++;
 			continue;
 		}
-		sys_canFrame_t *f = &r->frames[r->head];
-		f->ext = (hdr.IDE == CAN_ID_EXT) ? TRUE : FALSE;
-		f->id = f->ext ? hdr.ExtId : hdr.StdId;
-		f->dlc = (hdr.DLC > 8U) ? 8U : (uint8_t)hdr.DLC;
-		memcpy(f->data, data, sizeof(f->data));
-		f->rxTimeMs = sys_getTimeMs();
+		sys_canFrame_t *frame = &ring->frames[ring->head];
+		frame->ext = (rxHeader.IDE == CAN_ID_EXT) ? TRUE : FALSE;
+		frame->id = frame->ext ? rxHeader.ExtId : rxHeader.StdId;
+		frame->dlc = (rxHeader.DLC > 8U) ? 8U : (uint8_t)rxHeader.DLC;
+		memcpy(frame->data, rxData, sizeof(frame->data));
+		frame->rxTimeMs = sys_getTimeMs();
 		__DMB();
-		r->head = next;
+		ring->head = nextHead;
 	}
 }
 

@@ -26,3 +26,10 @@ uint32_t sys_getTimeUs(void) {
 uint32_t sys_getTimeMs(void) {
 	return HAL_GetTick();
 }
+
+void sys_delayUs(uint32_t us) {
+	uint32_t start = sys_getTimeUs();
+
+	while ((uint32_t)(sys_getTimeUs() - start) < us) {
+	}
+}

@@ -10,8 +10,8 @@ extern "C" {
 #endif
 
 typedef enum {
-    SYS_SPI1,
-    SYS_SPI2
+    SYS_SPI_M0,
+    SYS_SPI_M1
 } sys_spiBus_t;
 
 uint8_t sys_spiWrite(sys_spiBus_t bus, const uint8_t *tx, uint16_t len);

@@ -4,7 +4,7 @@
 #include "main.h"
 
 #define RX_SIZE 256U
-#define TX_TIMEOUT_MS 100U
+#define TX_TIMEOUT_MS 50U
 
 extern UART_HandleTypeDef huart1;
 
@@ -23,15 +23,15 @@ uint8_t sys_uartInit(void) {
 }
 
 uint16_t sys_uartRead(uint8_t *dst, uint16_t max) {
-	uint16_t h = head;
-	uint16_t n = 0;
+	uint16_t curHead = head;
+	uint16_t count = 0;
 
 	__DMB();
-	while (tail != h && n < max) {
-		dst[n++] = rxBuf[tail];
+	while (tail != curHead && count < max) {
+		dst[count++] = rxBuf[tail];
 		tail = (uint16_t)((tail + 1U) % RX_SIZE);
 	}
-	return n;
+	return count;
 }
 
 uint8_t sys_uartWrite(const uint8_t *data, uint16_t len) {
