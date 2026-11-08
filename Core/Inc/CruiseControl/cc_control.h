@@ -6,7 +6,7 @@
 #ifndef CC_CONTROL_H
 #define CC_CONTROL_H
 
-#include <stdbool.h>
+#include "defines.h"
 #include "cc_state.h"
 
 #ifdef __cplusplus
@@ -23,7 +23,7 @@ void cc_control_init(void);
  * Capture on entry to MANUAL; clear for invalid feedback or other modes.
  */
 void cc_control_update(cc_state_t state, float measured_speed_mps,
-                       bool speed_valid);
+                       uint8_t speed_valid);
 
 #ifdef __cplusplus
 }

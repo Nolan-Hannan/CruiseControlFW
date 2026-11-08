@@ -24,16 +24,38 @@
 #include "cc_state.h"
 #include "cc_inputs.h"
 #include "cc_control.h"
+#include "sys_uart.h"
+#include "sys_can.h"
+#include "sys_flash.h"
+#include "sys_cc_dac.h"
+#include "sys_info_dac.h"
+#include "sys_imu.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
+/* Init progress, readable in the debugger. A halt leaves the failing stage in initStage. */
+typedef enum {
+  STAGE_PERIPHERALS = 0,   /* Also the value if a CubeMX peripheral init failed. */
+  STAGE_UART,
+  STAGE_CAN,
+  STAGE_FLASH,
+  STAGE_CC_DAC,
+  STAGE_INFO_DAC,
+  STAGE_IMU,
+  STAGE_CC_INPUTS,
+  STAGE_RUNNING            /* All inits passed; the main loop stays on this value. */
+} initStage_t;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define INIT_STEP(stage, call) \
+  do { initStage = (stage); if (!(call)) { Error_Handler(); } } while (0)
 
 /* USER CODE END PD */
 
@@ -52,8 +74,11 @@ SPI_HandleTypeDef hspi2;
 TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart1;
+DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
+
+volatile initStage_t initStage = STAGE_PERIPHERALS;
 
 /* Confirmed active-high: BRAKE, FORWARD, and REVERSE.
  * MODE_SWITCH polarity is still an assumption; button processing is disabled.
@@ -65,7 +90,7 @@ static const cc_inputs_config_t cc_input_config = {
     .reverse_active_level = CC_INPUT_ACTIVE_HIGH,
     .forward_rule = CC_FORWARD_REQUIRED,
     /* TODO: Confirm button wiring/polarity and validate 20 ms before enabling. */
-    .mode_button_enabled = false,
+    .mode_button_enabled = FALSE,
     .mode_debounce_ms = 20U
 };
 
@@ -74,6 +99,7 @@ static const cc_inputs_config_t cc_input_config = {
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_CAN2_Init(void);
 static void MX_SPI1_Init(void);
@@ -118,6 +144,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_CAN1_Init();
   MX_CAN2_Init();
   MX_SPI1_Init();
@@ -125,12 +152,17 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  INIT_STEP(STAGE_UART, sys_uartInit());
+  INIT_STEP(STAGE_CAN, sys_canInit());
+  INIT_STEP(STAGE_FLASH, sys_flashInit());
+  INIT_STEP(STAGE_CC_DAC, sys_ccDacInit());
+  INIT_STEP(STAGE_INFO_DAC, sys_infoDacInit());
+  INIT_STEP(STAGE_IMU, sys_imuInit());
   cc_state_init();            // Initialize cc state
   cc_control_init();
-  if (!cc_inputs_init(&cc_input_config))
-  {
-    Error_Handler();
-  }
+  INIT_STEP(STAGE_CC_INPUTS, cc_inputs_init(&cc_input_config));
+  initStage = STAGE_RUNNING;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -142,7 +174,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
     /* TODO: Replace these placeholders with valid, recent speed feedback. */
     const float measured_speed_mps = 0.0f;
-    const bool speed_valid = false;
+    const uint8_t speed_valid = FALSE;
 
     cc_inputs_t inputs = cc_inputs_update();
     cc_state_update(inputs.mode_pressed,
@@ -389,7 +421,7 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-
+  HAL_TIM_Base_Start(&htim2);
   /* USER CODE END TIM2_Init 2 */
 
 }
@@ -428,6 +460,22 @@ static void MX_USART1_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -459,11 +507,17 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SPI1_SCSN_FLASH_Pin|SPI1_SCSN_DAC_Pin|SPI1_SCSN_IMU_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : BRAKE_Pin FORWARD_Pin REVERSE_Pin MODE_SWITCH_Pin */
-  GPIO_InitStruct.Pin = BRAKE_Pin|FORWARD_Pin|REVERSE_Pin|MODE_SWITCH_Pin;
+  /*Configure GPIO pins : BRAKE_Pin REVERSE_Pin MODE_SWITCH_Pin */
+  GPIO_InitStruct.Pin = BRAKE_Pin|REVERSE_Pin|MODE_SWITCH_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : FORWARD_Pin */
+  GPIO_InitStruct.Pin = FORWARD_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(FORWARD_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MUX_SEL_Pin */
   GPIO_InitStruct.Pin = MUX_SEL_Pin;
