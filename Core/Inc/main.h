@@ -57,6 +57,10 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define ADC_RAW_Pin GPIO_PIN_0
+#define ADC_RAW_GPIO_Port GPIOC
+#define ADC_CC_OUT_Pin GPIO_PIN_1
+#define ADC_CC_OUT_GPIO_Port GPIOC
 #define BRAKE_Pin GPIO_PIN_0
 #define BRAKE_GPIO_Port GPIOA
 #define BRAKE_EXTI_IRQn EXTI0_IRQn
