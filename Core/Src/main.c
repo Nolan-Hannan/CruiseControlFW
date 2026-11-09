@@ -30,6 +30,7 @@
 #include "sys_cc_dac.h"
 #include "sys_info_dac.h"
 #include "sys_imu.h"
+#include "cli.h"
 
 /* USER CODE END Includes */
 
@@ -45,6 +46,7 @@ typedef enum {
   STAGE_CC_DAC,
   STAGE_INFO_DAC,
   STAGE_IMU,
+  STAGE_CLI,
   STAGE_CC_INPUTS,
   STAGE_RUNNING            /* All inits passed; the main loop stays on this value. */
 } initStage_t;
@@ -162,6 +164,7 @@ int main(void)
   INIT_STEP(STAGE_CC_DAC, sys_ccDacInit());
   INIT_STEP(STAGE_INFO_DAC, sys_infoDacInit());
   INIT_STEP(STAGE_IMU, sys_imuInit());
+  INIT_STEP(STAGE_CLI, CLI_Init());
   cc_state_init();            // Initialize cc state
   cc_control_init();
   INIT_STEP(STAGE_CC_INPUTS, cc_inputs_init(&cc_input_config));
@@ -184,6 +187,8 @@ int main(void)
     cc_state_update(inputs.mode_pressed,
                     inputs.cruise_allowed && speed_valid);
     cc_control_update(cc_state_get(), measured_speed_mps, speed_valid);
+
+    CLI_Process();
   }
   /* USER CODE END 3 */
 }
