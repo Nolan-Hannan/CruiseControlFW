@@ -1119,6 +1119,9 @@
           <name>$PROJ_DIR$/../Core/Src/SysLib/sys_cc_dac.c</name>
         </file>
         <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_crc.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$/../Core/Src/SysLib/sys_flash.c</name>
         </file>
         <file>
@@ -1131,6 +1134,9 @@
           <name>$PROJ_DIR$/../Core/Src/SysLib/sys_info_dac.c</name>
         </file>
         <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_soc.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$/../Core/Src/SysLib/sys_spi.c</name>
         </file>
         <file>
@@ -1138,6 +1144,9 @@
         </file>
         <file>
           <name>$PROJ_DIR$/../Core/Src/SysLib/sys_uart.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/SysLib/sys_xmodem.c</name>
         </file>
       </group>
     </group>

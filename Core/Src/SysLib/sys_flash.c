@@ -13,6 +13,7 @@
 #define OP_JDID 0x9FU
 #define OP_READ 0x03U
 #define OP_PGWR 0x02U
+#define OP_PGPR 0x0AU
 #define OP_SE   0x20U
 #define OP_CE   0xC7U
 
@@ -148,7 +149,7 @@ uint8_t sys_flashRead(uint32_t addr, uint8_t *dst, uint16_t len) {
 	return ok;
 }
 
-uint8_t sys_flashWriteStart(uint32_t addr, const uint8_t *src, uint16_t len) {
+static uint8_t pageStart(uint8_t op, uint32_t addr, const uint8_t *src, uint16_t len) {
 	uint8_t cmdHeader[4];
 	uint8_t ok;
 
@@ -156,11 +157,39 @@ uint8_t sys_flashWriteStart(uint32_t addr, const uint8_t *src, uint16_t len) {
 	    (addr % PAGE_SIZE) + len > PAGE_SIZE || !writeEnable()) {
 		return FALSE;
 	}
-	buildHeader(cmdHeader, OP_PGWR, addr);
+	buildHeader(cmdHeader, op, addr);
 	select();
 	ok = sys_spiWrite(FLASH_BUS, cmdHeader, sizeof(cmdHeader)) && sys_spiWrite(FLASH_BUS, src, len);
 	deselect();
 	return ok;
+}
+
+static uint8_t pageBlock(uint8_t op, uint32_t addr, const uint8_t *src, uint16_t len) {
+	if (src == NULL || len == 0U) {
+		return FALSE;
+	}
+	while (len > 0U) {
+		uint16_t chunkLen = (uint16_t)(PAGE_SIZE - (addr % PAGE_SIZE));
+
+		if (chunkLen > len) {
+			chunkLen = len;
+		}
+		if (!pageStart(op, addr, src, chunkLen) || !waitReady(WRITE_TIMEOUT_MS)) {
+			return FALSE;
+		}
+		addr += chunkLen;
+		src += chunkLen;
+		len = (uint16_t)(len - chunkLen);
+	}
+	return TRUE;
+}
+
+uint8_t sys_flashWriteStart(uint32_t addr, const uint8_t *src, uint16_t len) {
+	return pageStart(OP_PGWR, addr, src, len);
+}
+
+uint8_t sys_flashProgramStart(uint32_t addr, const uint8_t *src, uint16_t len) {
+	return pageStart(OP_PGPR, addr, src, len);
 }
 
 uint8_t sys_flashEraseSectorStart(uint32_t addr) {
@@ -175,23 +204,11 @@ uint8_t sys_flashEraseChipStart(void) {
 }
 
 uint8_t sys_flashWriteBlock(uint32_t addr, const uint8_t *src, uint16_t len) {
-	if (src == NULL || len == 0U) {
-		return FALSE;
-	}
-	while (len > 0U) {
-		uint16_t chunkLen = (uint16_t)(PAGE_SIZE - (addr % PAGE_SIZE));
+	return pageBlock(OP_PGWR, addr, src, len);
+}
 
-		if (chunkLen > len) {
-			chunkLen = len;
-		}
-		if (!sys_flashWriteStart(addr, src, chunkLen) || !waitReady(WRITE_TIMEOUT_MS)) {
-			return FALSE;
-		}
-		addr += chunkLen;
-		src += chunkLen;
-		len = (uint16_t)(len - chunkLen);
-	}
-	return TRUE;
+uint8_t sys_flashProgramBlock(uint32_t addr, const uint8_t *src, uint16_t len) {
+	return pageBlock(OP_PGPR, addr, src, len);
 }
 
 uint8_t sys_flashEraseSectorBlock(uint32_t addr) {
