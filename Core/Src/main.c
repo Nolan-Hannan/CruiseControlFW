@@ -30,7 +30,9 @@
 #include "sys_cc_dac.h"
 #include "sys_info_dac.h"
 #include "sys_imu.h"
+#include "sys_time.h"
 #include "cli.h"
+#include "vehicle_data.h"
 
 /* USER CODE END Includes */
 
@@ -83,6 +85,9 @@ DMA_HandleTypeDef hdma_usart1_rx;
 /* USER CODE BEGIN PV */
 
 volatile initStage_t initStage = STAGE_PERIPHERALS;
+
+/* Written only from the main loop. */
+static vehicle_data_t vehicle_data;
 
 /* Active-high: BRAKE, FORWARD, REVERSE and MODE_SWITCH (HI = pressed). */
 static const cc_inputs_config_t cc_input_config = {
@@ -162,6 +167,7 @@ int main(void)
   INIT_STEP(STAGE_INFO_DAC, sys_infoDacInit());
   INIT_STEP(STAGE_IMU, sys_imuInit());
   INIT_STEP(STAGE_CLI, CLI_Init());
+  vehicle_data_init(&vehicle_data);
   cc_state_init();            // Initialize cc state
   cc_control_init();
   INIT_STEP(STAGE_CC_INPUTS, cc_inputs_init(&cc_input_config));
@@ -176,11 +182,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    cc_control_service();
-
-    /* TODO: Replace the stub with valid, recent speed feedback. */
-    float measured_speed_mps;
-    const uint8_t speed_valid = cc_control_speed(&measured_speed_mps);
+    /* TODO: Ingest CAN into vehicle_data here. Until then speed stays invalid. */
+    const uint32_t now_ms = sys_getTimeMs();
+    const float measured_speed_mps = vehicle_data.current_speed.value;
+    const uint8_t speed_valid = validate_cc_data(&vehicle_data, now_ms);
 
     cc_inputs_t inputs = cc_inputs_update();
     cc_state_update(inputs.mode_pressed,
