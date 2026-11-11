@@ -89,6 +89,9 @@ volatile initStage_t initStage = STAGE_PERIPHERALS;
 /* Written only from the main loop. */
 static vehicle_data_t vehicle_data;
 
+/* UTC clock, anchored by GPS time. Declared extern in sys_time.h. */
+wall_clock_t wall_clock;
+
 /* Active-high: BRAKE, FORWARD, REVERSE and MODE_SWITCH (HI = pressed). */
 static const cc_inputs_config_t cc_input_config = {
     .mode_active_level = CC_INPUT_ACTIVE_HIGH,
@@ -168,6 +171,7 @@ int main(void)
   INIT_STEP(STAGE_IMU, sys_imuInit());
   INIT_STEP(STAGE_CLI, CLI_Init());
   vehicle_data_init(&vehicle_data);
+  sys_wallClockInit(&wall_clock);
   cc_state_init();            // Initialize cc state
   cc_control_init();
   INIT_STEP(STAGE_CC_INPUTS, cc_inputs_init(&cc_input_config));
