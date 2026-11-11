@@ -182,10 +182,19 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    cc_control_service();
+
     /* TODO: Ingest CAN into vehicle_data here. Until then speed stays invalid. */
     const uint32_t now_ms = sys_getTimeMs();
-    const float measured_speed_mps = vehicle_data.current_speed.value;
-    const uint8_t speed_valid = validate_cc_data(&vehicle_data, now_ms);
+    float measured_speed_mps = vehicle_data.current_speed.value;
+    uint8_t speed_valid = validate_cc_data(&vehicle_data, now_ms);
+
+    /* The CLI test stub, when on, replaces the real speed (dry run). */
+    float test_speed_mps;
+    if (cc_control_speed(&test_speed_mps)) {
+        measured_speed_mps = test_speed_mps;
+        speed_valid = TRUE;
+    }
 
     cc_inputs_t inputs = cc_inputs_update();
     cc_state_update(inputs.mode_pressed,
