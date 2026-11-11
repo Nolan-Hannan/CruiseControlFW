@@ -89,17 +89,14 @@ volatile initStage_t initStage = STAGE_PERIPHERALS;
 /* Written only from the main loop. */
 static vehicle_data_t vehicle_data;
 
-/* Confirmed active-high: BRAKE, FORWARD, and REVERSE.
- * MODE_SWITCH polarity is still an assumption; button processing is disabled.
- */
+/* Active-high: BRAKE, FORWARD, REVERSE and MODE_SWITCH (HI = pressed). */
 static const cc_inputs_config_t cc_input_config = {
     .mode_active_level = CC_INPUT_ACTIVE_HIGH,
     .brake_active_level = CC_INPUT_ACTIVE_HIGH,
     .forward_active_level = CC_INPUT_ACTIVE_HIGH,
     .reverse_active_level = CC_INPUT_ACTIVE_HIGH,
     .forward_rule = CC_FORWARD_REQUIRED,
-    /* TODO: Confirm button wiring/polarity and validate 20 ms before enabling. */
-    .mode_button_enabled = FALSE,
+    .mode_button_enabled = TRUE,
     .mode_debounce_ms = 20U
 };
 
@@ -185,10 +182,19 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    cc_control_service();
+
     /* TODO: Ingest CAN into vehicle_data here. Until then speed stays invalid. */
     const uint32_t now_ms = sys_getTimeMs();
-    const float measured_speed_mps = vehicle_data.current_speed.value;
-    const uint8_t speed_valid = validate_cc_data(&vehicle_data, now_ms);
+    float measured_speed_mps = vehicle_data.current_speed.value;
+    uint8_t speed_valid = validate_cc_data(&vehicle_data, now_ms);
+
+    /* The CLI test stub, when on, replaces the real speed (dry run). */
+    float test_speed_mps;
+    if (cc_control_speed(&test_speed_mps)) {
+        measured_speed_mps = test_speed_mps;
+        speed_valid = TRUE;
+    }
 
     cc_inputs_t inputs = cc_inputs_update();
     cc_state_update(inputs.mode_pressed,
