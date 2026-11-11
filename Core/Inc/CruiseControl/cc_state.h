@@ -26,6 +26,9 @@ void cc_state_init(void);
 /** Return the current cruise-control state. */
 cc_state_t cc_state_get(void);
 
+/** Drop to OFF without a button press (fault or failed engage). */
+void cc_state_force_off(void);
+
 void cc_state_update(uint8_t mode_pressed, uint8_t cruise_allowed);
 
 #ifdef __cplusplus

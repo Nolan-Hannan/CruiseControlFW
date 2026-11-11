@@ -1,6 +1,7 @@
 /* UART command line. */
 
 #include "cli.h"
+#include "cc_control.h"
 #include "sys_uart.h"
 #include <stddef.h>
 #include <string.h>
@@ -25,10 +26,12 @@ typedef struct {
 
 static int cmdHelp(int argc, char *argv[]);
 static int cmdPing(int argc, char *argv[]);
+static int cmdTest(int argc, char *argv[]);
 
 static const command_t commands[] = {
-	{ "help", "list commands", cmdHelp },
-	{ "ping", "reply pong",    cmdPing },
+	{ "help", "list commands",                   cmdHelp },
+	{ "ping", "reply pong",                      cmdPing },
+	{ "test", "bench outputs: test stop to end", cmdTest },
 };
 
 #define COMMAND_COUNT (sizeof(commands) / sizeof(commands[0]))
@@ -186,6 +189,116 @@ static void handleByte(uint8_t c) {
 			overflow = TRUE;
 		}
 	}
+}
+
+#define TEST_USAGE "usage: test speed 0|1 cm/s | led red|green|blue|off | dac mV | mux 0|1 | loop | stop"
+
+/* Returns 0, 1 if text is not a number, or 2 if it is above max. */
+static int parseUint(const char *text, uint32_t max, uint32_t *out) {
+	uint32_t value = 0U;
+
+	if (*text == '\0') {
+		return 1;
+	}
+	for (; *text != '\0'; text++) {
+		if (*text < '0' || *text > '9') {
+			return 1;
+		}
+		value = value * 10U + (uint32_t)(*text - '0');
+		if (value > max) {
+			return 2;
+		}
+	}
+	*out = value;
+	return 0;
+}
+
+static int testUsage(void) {
+	reply(TEST_USAGE);
+	return 1;
+}
+
+static int testDone(int code) {
+	if (code == 0) {
+		reply("OK");
+	}
+	return code;
+}
+
+static void printLoop(const cc_loop_result_t *result) {
+	char out[OUT_MAX];
+	uint8_t len = 0U;
+
+	append(out, &len, "raw ");
+	appendInt(out, &len, result->raw_mv);
+	append(out, &len, " mV, out ");
+	appendInt(out, &len, result->out_mv);
+	append(out, &len, " mV, loop ");
+	appendInt(out, &len, result->loop_mv);
+	append(out, &len, " mV\r\n");
+	flush(out, len);
+}
+
+static int cmdTest(int argc, char *argv[]) {
+	uint32_t first = 0U;
+	uint32_t second = 0U;
+	int status;
+
+	if (argc == 2 && sameName(argv[1], "stop")) {
+		cc_control_testStop();
+		return testDone(0);
+	}
+	if (argc == 2 && sameName(argv[1], "loop")) {
+		cc_loop_result_t result;
+		int code = cc_control_testLoop(&result);
+
+		if (code == CC_TEST_OK || code == CC_TEST_MISMATCH || code == CC_TEST_AMBIGUOUS) {
+			printLoop(&result);
+		}
+		return testDone(code);
+	}
+	if (argc == 4 && sameName(argv[1], "speed")) {
+		status = parseUint(argv[2], 1U, &first);
+		if (status == 0) {
+			status = parseUint(argv[3], 65535U, &second);
+		}
+		if (status != 0) {
+			return (status == 2) ? 2 : testUsage();
+		}
+		return testDone(cc_control_testSpeed((uint8_t)first, (uint16_t)second));
+	}
+	if (argc == 3 && sameName(argv[1], "led")) {
+		cc_led_t color;
+
+		if (sameName(argv[2], "red")) {
+			color = CC_LED_RED;
+		} else if (sameName(argv[2], "green")) {
+			color = CC_LED_GREEN;
+		} else if (sameName(argv[2], "blue")) {
+			color = CC_LED_BLUE;
+		} else if (sameName(argv[2], "off")) {
+			color = CC_LED_OFF;
+		} else {
+			return testUsage();
+		}
+		cc_control_testLed(color);
+		return testDone(0);
+	}
+	if (argc == 3 && sameName(argv[1], "dac")) {
+		status = parseUint(argv[2], 3300U, &first);
+		if (status != 0) {
+			return (status == 2) ? 2 : testUsage();
+		}
+		return testDone(cc_control_testDac((uint16_t)first));
+	}
+	if (argc == 3 && sameName(argv[1], "mux")) {
+		status = parseUint(argv[2], 1U, &first);
+		if (status != 0) {
+			return (status == 2) ? 2 : testUsage();
+		}
+		return testDone(cc_control_testMux((uint8_t)first));
+	}
+	return testUsage();
 }
 
 static int cmdPing(int argc, char *argv[]) {

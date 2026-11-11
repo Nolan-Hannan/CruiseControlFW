@@ -84,17 +84,14 @@ DMA_HandleTypeDef hdma_usart1_rx;
 
 volatile initStage_t initStage = STAGE_PERIPHERALS;
 
-/* Confirmed active-high: BRAKE, FORWARD, and REVERSE.
- * MODE_SWITCH polarity is still an assumption; button processing is disabled.
- */
+/* Active-high: BRAKE, FORWARD, REVERSE and MODE_SWITCH (HI = pressed). */
 static const cc_inputs_config_t cc_input_config = {
     .mode_active_level = CC_INPUT_ACTIVE_HIGH,
     .brake_active_level = CC_INPUT_ACTIVE_HIGH,
     .forward_active_level = CC_INPUT_ACTIVE_HIGH,
     .reverse_active_level = CC_INPUT_ACTIVE_HIGH,
     .forward_rule = CC_FORWARD_REQUIRED,
-    /* TODO: Confirm button wiring/polarity and validate 20 ms before enabling. */
-    .mode_button_enabled = FALSE,
+    .mode_button_enabled = TRUE,
     .mode_debounce_ms = 20U
 };
 
@@ -179,9 +176,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    /* TODO: Replace these placeholders with valid, recent speed feedback. */
-    const float measured_speed_mps = 0.0f;
-    const uint8_t speed_valid = FALSE;
+    cc_control_service();
+
+    /* TODO: Replace the stub with valid, recent speed feedback. */
+    float measured_speed_mps;
+    const uint8_t speed_valid = cc_control_speed(&measured_speed_mps);
 
     cc_inputs_t inputs = cc_inputs_update();
     cc_state_update(inputs.mode_pressed,
