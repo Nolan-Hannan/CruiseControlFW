@@ -59,7 +59,7 @@ typedef enum {
 /* USER CODE BEGIN PD */
 
 #define INIT_STEP(stage, call) \
-  do { initStage = (stage); if (!(call)) { Error_Handler(); } } while (0)
+  do { initStage = (stage); HAL_IWDG_Refresh(&hiwdg); if (!(call)) { Error_Handler(); } } while (0)
 
 /* USER CODE END PD */
 
@@ -74,6 +74,8 @@ ADC_HandleTypeDef hadc1;
 CAN_HandleTypeDef hcan1;
 CAN_HandleTypeDef hcan2;
 
+IWDG_HandleTypeDef hiwdg;
+
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 
@@ -85,6 +87,9 @@ DMA_HandleTypeDef hdma_usart1_rx;
 /* USER CODE BEGIN PV */
 
 volatile initStage_t initStage = STAGE_PERIPHERALS;
+
+/* TRUE if the last reset was the watchdog. */
+volatile uint8_t resetByWatchdog = FALSE;
 
 /* Written only from the main loop. */
 static vehicle_data_t vehicle_data;
@@ -116,6 +121,7 @@ static void MX_SPI2_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_IWDG_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -142,14 +148,16 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  resetByWatchdog = __HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) ? TRUE : FALSE;
+  __HAL_RCC_CLEAR_RESET_FLAGS();
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  /* Stop the watchdog counting while halted in the debugger. */
+  __HAL_DBGMCU_FREEZE_IWDG();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -162,6 +170,7 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   MX_ADC1_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   INIT_STEP(STAGE_UART, sys_uartInit());
   INIT_STEP(STAGE_CAN, sys_canInit());
@@ -169,6 +178,9 @@ int main(void)
   INIT_STEP(STAGE_CC_DAC, sys_ccDacInit());
   INIT_STEP(STAGE_INFO_DAC, sys_infoDacInit());
   INIT_STEP(STAGE_IMU, sys_imuInit());
+  if (resetByWatchdog) {
+    CLI_Print("Reset: watchdog\r\n");
+  }
   INIT_STEP(STAGE_CLI, CLI_Init());
   vehicle_data_init(&vehicle_data);
   sys_wallClockInit(&wall_clock);
@@ -206,6 +218,9 @@ int main(void)
     cc_control_update(cc_state_get(), measured_speed_mps, speed_valid);
 
     CLI_Process();
+
+    /* Once per pass, only after everything above has run. */
+    HAL_IWDG_Refresh(&hiwdg);
   }
   /* USER CODE END 3 */
 }
@@ -227,9 +242,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 16;
@@ -389,6 +405,34 @@ static void MX_CAN2_Init(void)
   /* USER CODE BEGIN CAN2_Init 2 */
 
   /* USER CODE END CAN2_Init 2 */
+
+}
+
+/**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_IWDG_Init(void)
+{
+
+  /* USER CODE BEGIN IWDG_Init 0 */
+
+  /* USER CODE END IWDG_Init 0 */
+
+  /* USER CODE BEGIN IWDG_Init 1 */
+
+  /* USER CODE END IWDG_Init 1 */
+  hiwdg.Instance = IWDG;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
+  hiwdg.Init.Reload = 1999;
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN IWDG_Init 2 */
+
+  /* USER CODE END IWDG_Init 2 */
 
 }
 
