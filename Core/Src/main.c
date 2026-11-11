@@ -30,7 +30,9 @@
 #include "sys_cc_dac.h"
 #include "sys_info_dac.h"
 #include "sys_imu.h"
+#include "sys_time.h"
 #include "cli.h"
+#include "vehicle_data.h"
 
 /* USER CODE END Includes */
 
@@ -84,17 +86,17 @@ DMA_HandleTypeDef hdma_usart1_rx;
 
 volatile initStage_t initStage = STAGE_PERIPHERALS;
 
-/* Confirmed active-high: BRAKE, FORWARD, and REVERSE.
- * MODE_SWITCH polarity is still an assumption; button processing is disabled.
- */
+/* Written only from the main loop. */
+static vehicle_data_t vehicle_data;
+
+/* Active-high: BRAKE, FORWARD, REVERSE and MODE_SWITCH (HI = pressed). */
 static const cc_inputs_config_t cc_input_config = {
     .mode_active_level = CC_INPUT_ACTIVE_HIGH,
     .brake_active_level = CC_INPUT_ACTIVE_HIGH,
     .forward_active_level = CC_INPUT_ACTIVE_HIGH,
     .reverse_active_level = CC_INPUT_ACTIVE_HIGH,
     .forward_rule = CC_FORWARD_REQUIRED,
-    /* TODO: Confirm button wiring/polarity and validate 20 ms before enabling. */
-    .mode_button_enabled = FALSE,
+    .mode_button_enabled = TRUE,
     .mode_debounce_ms = 20U
 };
 
@@ -165,6 +167,7 @@ int main(void)
   INIT_STEP(STAGE_INFO_DAC, sys_infoDacInit());
   INIT_STEP(STAGE_IMU, sys_imuInit());
   INIT_STEP(STAGE_CLI, CLI_Init());
+  vehicle_data_init(&vehicle_data);
   cc_state_init();            // Initialize cc state
   cc_control_init();
   INIT_STEP(STAGE_CC_INPUTS, cc_inputs_init(&cc_input_config));
@@ -179,9 +182,19 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    /* TODO: Replace these placeholders with valid, recent speed feedback. */
-    const float measured_speed_mps = 0.0f;
-    const uint8_t speed_valid = FALSE;
+    cc_control_service();
+
+    /* TODO: Ingest CAN into vehicle_data here. Until then speed stays invalid. */
+    const uint32_t now_ms = sys_getTimeMs();
+    float measured_speed_mps = vehicle_data.current_speed.value;
+    uint8_t speed_valid = validate_cc_data(&vehicle_data, now_ms);
+
+    /* The CLI test stub, when on, replaces the real speed (dry run). */
+    float test_speed_mps;
+    if (cc_control_speed(&test_speed_mps)) {
+        measured_speed_mps = test_speed_mps;
+        speed_valid = TRUE;
+    }
 
     cc_inputs_t inputs = cc_inputs_update();
     cc_state_update(inputs.mode_pressed,

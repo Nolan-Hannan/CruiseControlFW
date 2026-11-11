@@ -14,6 +14,10 @@ cc_state_t cc_state_get(void) {
     return current_state;
 }
 
+void cc_state_force_off(void) {
+    current_state = CC_STATE_OFF;
+}
+
 // State update function
 void cc_state_update(uint8_t mode_pressed, uint8_t cruise_allowed) {
     /* Safety overrides a simultaneous mode press. */
