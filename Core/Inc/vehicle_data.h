@@ -27,7 +27,9 @@ typedef struct {
 typedef struct {
     data_point_t current_speed; /* m/s */
     data_point_t battery_soc;   /* percent, 0 to 100 */
-    data_point_t mppt_power;    /* W */
+    data_point_t mppt1_power;   /* W, one point per MPPT */
+    data_point_t mppt2_power;   /* W */
+    data_point_t mppt3_power;   /* W */
     data_point_t aux_power;     /* W */
     data_point_t gradient;      /* radians */
     data_point_t wind_speed;    /* m/s */

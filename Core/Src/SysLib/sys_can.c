@@ -67,6 +67,13 @@ uint8_t sys_canRead(sys_canBus_t bus, sys_canFrame_t *frame) {
 	return TRUE;
 }
 
+uint8_t sys_canPending(sys_canBus_t bus) {
+	if (bus >= SYS_CAN_BUS_COUNT) {
+		return 0U;
+	}
+	return (uint8_t)((rings[bus].head - rings[bus].tail) & RING_MASK);
+}
+
 uint32_t sys_canDropped(sys_canBus_t bus) {
 	return bus < SYS_CAN_BUS_COUNT ? rings[bus].dropped : 0U;
 }

@@ -25,6 +25,10 @@ typedef struct {
 
 uint8_t sys_canInit(void);
 uint8_t sys_canRead(sys_canBus_t bus, sys_canFrame_t *frame);
+
+/* Frames waiting for sys_canRead on this bus, 0 to 31. New frames can arrive after the call. */
+uint8_t sys_canPending(sys_canBus_t bus);
+
 uint32_t sys_canDropped(sys_canBus_t bus);
 
 #ifdef __cplusplus
