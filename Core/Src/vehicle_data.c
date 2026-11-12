@@ -16,7 +16,9 @@ void vehicle_data_init(vehicle_data_t *d) {
 	}
 	initPoint(&d->current_speed, VEHICLE_DATA_AGE_SPEED_MS);
 	initPoint(&d->battery_soc, VEHICLE_DATA_AGE_SOC_MS);
-	initPoint(&d->mppt_power, VEHICLE_DATA_AGE_MPPT_MS);
+	initPoint(&d->mppt1_power, VEHICLE_DATA_AGE_MPPT_MS);
+	initPoint(&d->mppt2_power, VEHICLE_DATA_AGE_MPPT_MS);
+	initPoint(&d->mppt3_power, VEHICLE_DATA_AGE_MPPT_MS);
 	initPoint(&d->aux_power, VEHICLE_DATA_AGE_AUX_MS);
 	initPoint(&d->gradient, VEHICLE_DATA_AGE_GRADIENT_MS);
 	initPoint(&d->wind_speed, VEHICLE_DATA_AGE_WIND_MS);
@@ -55,7 +57,9 @@ uint8_t validate_po_data(const vehicle_data_t *d, uint32_t now_ms) {
 	}
 	return (data_point_valid(&d->current_speed, now_ms) &&
 	        data_point_valid(&d->battery_soc, now_ms) &&
-	        data_point_valid(&d->mppt_power, now_ms) &&
+	        data_point_valid(&d->mppt1_power, now_ms) &&
+	        data_point_valid(&d->mppt2_power, now_ms) &&
+	        data_point_valid(&d->mppt3_power, now_ms) &&
 	        data_point_valid(&d->aux_power, now_ms) &&
 	        data_point_valid(&d->gradient, now_ms) &&
 	        data_point_valid(&d->wind_speed, now_ms)) ? TRUE : FALSE;
