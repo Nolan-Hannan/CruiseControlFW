@@ -44,7 +44,7 @@ static const command_t commands[] = {
 	{ "download", "load the SOC curve by XMODEM-CRC", cmdDownload },
 	{ "soc",      "soc info | soc verify",            cmdSoc },
 	{ "test", "bench outputs: test stop to end", cmdTest },
-	{ "gradcal", "zero the gradient (car on level ground)", cmdGradCal },
+	{ "gradcal", "zero the gradient and save it (car still, level)", cmdGradCal },
 };
 
 #define COMMAND_COUNT (sizeof(commands) / sizeof(commands[0]))
@@ -489,12 +489,18 @@ static int cmdPing(int argc, char *argv[]) {
 static int cmdGradCal(int argc, char *argv[]) {
 	(void)argc;
 	(void)argv;
-	if (!cc_gradient_calibrate()) {
-		errorNote = "no IMU sample";
-		return 1;
+	int code;
+
+	CLI_Print("keep the car still and level...\r\n");
+	code = cc_gradient_calibrate();
+	if (code == CC_GRADIENT_CAL_ERR_IMU) {
+		errorNote = "not enough IMU samples";
+	} else if (code == CC_GRADIENT_CAL_ERR_SAVE) {
+		errorNote = "calibrated but not saved to flash";
+	} else {
+		reply("gradient zeroed and saved");
 	}
-	reply("gradient zeroed");
-	return 0;
+	return code;
 }
 
 static int cmdHelp(int argc, char *argv[]) {

@@ -54,4 +54,19 @@
 #define EEP_SOC_DAY_STRIDE  0x1686UL
 #define EEP_SOC_END_CRC_OFF 0x43BEUL
 
+/* IMU calibration record, one 4 KB sector. Rewritten whole by the gradcal command. */
+#define EEP_IMU_CAL_ADDR      0x00B000UL
+#define EEP_IMU_CAL_SIZE      0x1000UL
+#define EEP_IMU_CAL_REC_SIZE  32U
+
+/* IMU calibration record offsets. Floats are IEEE 754, little endian. */
+#define EEP_IMU_ID_OFF        0x00U /* "IMUC" */
+#define EEP_IMU_VERSION_OFF   0x04U /* 0x01 */
+#define EEP_IMU_SAMPLES_OFF   0x05U /* samples averaged */
+#define EEP_IMU_RSVD0_OFF     0x06U /* 2 bytes */
+#define EEP_IMU_PITCH_OFF     0x08U /* float, level pitch offset, radians */
+#define EEP_IMU_GYRO_BIAS_OFF 0x0CU /* float, pitch rate bias at rest, deg/s */
+#define EEP_IMU_RSVD1_OFF     0x10U /* 12 bytes */
+#define EEP_IMU_CRC_OFF       0x1CU /* CRC32 of bytes 0x00 to 0x1B */
+
 #endif /* EEP_ADDR_H */
