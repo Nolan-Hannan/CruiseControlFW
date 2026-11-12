@@ -5,6 +5,7 @@
 #include "sys_soc.h"
 #include "sys_time.h"
 #include "cc_control.h"
+#include "cc_gradient.h"
 #include "sys_uart.h"
 #include "sys_xmodem.h"
 #include <stddef.h>
@@ -35,6 +36,7 @@ static int cmdPing(int argc, char *argv[]);
 static int cmdDownload(int argc, char *argv[]);
 static int cmdSoc(int argc, char *argv[]);
 static int cmdTest(int argc, char *argv[]);
+static int cmdGradCal(int argc, char *argv[]);
 
 static const command_t commands[] = {
 	{ "help",     "list commands",                                      cmdHelp },
@@ -42,6 +44,7 @@ static const command_t commands[] = {
 	{ "download", "load the SOC curve by XMODEM-CRC", cmdDownload },
 	{ "soc",      "soc info | soc verify",            cmdSoc },
 	{ "test", "bench outputs: test stop to end", cmdTest },
+	{ "gradcal", "zero the gradient and save it (car still, level)", cmdGradCal },
 };
 
 #define COMMAND_COUNT (sizeof(commands) / sizeof(commands[0]))
@@ -481,6 +484,23 @@ static int cmdPing(int argc, char *argv[]) {
 	(void)argv;
 	CLI_Print("pong\r\n");
 	return 0;
+}
+
+static int cmdGradCal(int argc, char *argv[]) {
+	(void)argc;
+	(void)argv;
+	int code;
+
+	CLI_Print("keep the car still and level...\r\n");
+	code = cc_gradient_calibrate();
+	if (code == CC_GRADIENT_CAL_ERR_IMU) {
+		errorNote = "not enough IMU samples";
+	} else if (code == CC_GRADIENT_CAL_ERR_SAVE) {
+		errorNote = "calibrated but not saved to flash";
+	} else {
+		reply("gradient zeroed and saved");
+	}
+	return code;
 }
 
 static int cmdHelp(int argc, char *argv[]) {

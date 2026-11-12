@@ -33,6 +33,7 @@
 #include "sys_time.h"
 #include "cli.h"
 #include "vehicle_data.h"
+#include "cc_gradient.h"
 
 /* USER CODE END Includes */
 
@@ -184,6 +185,7 @@ int main(void)
   INIT_STEP(STAGE_CLI, CLI_Init());
   vehicle_data_init(&vehicle_data);
   sys_wallClockInit(&wall_clock);
+  cc_gradient_init();
   cc_state_init();            // Initialize cc state
   cc_control_init();
   INIT_STEP(STAGE_CC_INPUTS, cc_inputs_init(&cc_input_config));
@@ -201,6 +203,7 @@ int main(void)
     cc_control_service();
 
     /* TODO: Ingest CAN into vehicle_data here. Until then speed stays invalid. */
+    cc_gradient_update(&vehicle_data);
     const uint32_t now_ms = sys_getTimeMs();
     float measured_speed_mps = vehicle_data.current_speed.value;
     uint8_t speed_valid = validate_cc_data(&vehicle_data, now_ms);
