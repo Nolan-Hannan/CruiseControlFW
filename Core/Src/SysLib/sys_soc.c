@@ -52,6 +52,10 @@ static struct {
 
 static const char *detail = "";
 
+/* Header of the active curve, read once and reused by sys_socPlanned until the next download. */
+static sys_socInfo_t planInfo;
+static uint8_t planLoaded = FALSE;
+
 static uint8_t fail(uint8_t code, const char *why) {
 	detail = why;
 	return code;
@@ -366,6 +370,7 @@ uint8_t sys_socFinish(void) {
 	if (!scanLog(&log) || !appendRecord(ctx.bank, &log)) {
 		return fail(SYS_SOC_ERR_FLASH, "pointer");
 	}
+	planLoaded = FALSE;
 	return SYS_SOC_OK;
 }
 
@@ -423,6 +428,52 @@ uint8_t sys_socGetInfo(sys_socInfo_t *info) {
 		info->day[i].stopMin = d[EEP_SOC_DAY_STOP_M];
 	}
 	return SYS_SOC_OK;
+}
+
+uint8_t sys_socPlanned(const world_time_t *t, float *soc_percent) {
+	uint8_t i;
+
+	if (t == NULL || soc_percent == NULL) {
+		return FALSE;
+	}
+	if (!planLoaded) {
+		if (sys_socGetInfo(&planInfo) != SYS_SOC_OK) {
+			return FALSE;
+		}
+		planLoaded = TRUE;
+	}
+	for (i = 0U; i < planInfo.days; i++) {
+		const sys_socDay_t *d = &planInfo.day[i];
+		int32_t sec = ((int32_t)t->hours - d->startHour) * 3600 + ((int32_t)t->min - d->startMin) * 60 + t->sec;
+		int32_t len = ((int32_t)d->stopHour - d->startHour) * 3600 + ((int32_t)d->stopMin - d->startMin) * 60;
+		uint8_t raw[4];
+		uint32_t index;
+		uint8_t count;
+		float a;
+		float b;
+
+		if (t->year != d->year || t->month != d->month || t->day != d->day) {
+			continue;
+		}
+		if (sec < 0 || sec > len || sec >= (int32_t)(SOC_SAMPLES * SOC_INTERVAL_S)) {
+			return FALSE;
+		}
+		index = (uint32_t)sec / SOC_INTERVAL_S;
+		count = (index + 1U < SOC_SAMPLES) ? 2U : 1U; /* the last sample has no successor */
+		if (!sys_flashRead(bankBase(planInfo.bank) + EEP_SOC_DATA_OFF + (uint32_t)i * EEP_SOC_DAY_STRIDE +
+		                   index * 2U, raw, (uint16_t)(count * 2U))) {
+			return FALSE;
+		}
+		/* Samples are percent times 100. */
+		a = (float)le16(&raw[0]);
+		b = (count == 2U) ? (float)le16(&raw[2]) : a;
+		if (a > 10000.0f || b > 10000.0f) {
+			return FALSE;
+		}
+		*soc_percent = (a + (b - a) * (float)((uint32_t)sec % SOC_INTERVAL_S) / (float)SOC_INTERVAL_S) / 100.0f;
+		return TRUE;
+	}
+	return FALSE;
 }
 
 uint8_t sys_socLastError(void) {

@@ -33,6 +33,7 @@
 #include "sys_time.h"
 #include "cli.h"
 #include "vehicle_data.h"
+#include "po_optimizer.h"
 
 /* USER CODE END Includes */
 
@@ -186,6 +187,7 @@ int main(void)
   sys_wallClockInit(&wall_clock);
   cc_state_init();            // Initialize cc state
   cc_control_init();
+  po_optimizer_init();
   INIT_STEP(STAGE_CC_INPUTS, cc_inputs_init(&cc_input_config));
   initStage = STAGE_RUNNING;
 
@@ -204,6 +206,7 @@ int main(void)
     const uint32_t now_ms = sys_getTimeMs();
     float measured_speed_mps = vehicle_data.current_speed.value;
     uint8_t speed_valid = validate_cc_data(&vehicle_data, now_ms);
+    po_optimizer_update(&vehicle_data, now_ms);
 
     /* The CLI test stub, when on, replaces the real speed (dry run). */
     float test_speed_mps;
