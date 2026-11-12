@@ -5,6 +5,7 @@
 #include "sys_soc.h"
 #include "sys_time.h"
 #include "cc_control.h"
+#include "cc_gradient.h"
 #include "sys_uart.h"
 #include "sys_xmodem.h"
 #include <stddef.h>
@@ -35,6 +36,7 @@ static int cmdPing(int argc, char *argv[]);
 static int cmdDownload(int argc, char *argv[]);
 static int cmdSoc(int argc, char *argv[]);
 static int cmdTest(int argc, char *argv[]);
+static int cmdGradCal(int argc, char *argv[]);
 
 static const command_t commands[] = {
 	{ "help",     "list commands",                                      cmdHelp },
@@ -42,6 +44,7 @@ static const command_t commands[] = {
 	{ "download", "load the SOC curve by XMODEM-CRC", cmdDownload },
 	{ "soc",      "soc info | soc verify",            cmdSoc },
 	{ "test", "bench outputs: test stop to end", cmdTest },
+	{ "gradcal", "zero the gradient (car on level ground)", cmdGradCal },
 };
 
 #define COMMAND_COUNT (sizeof(commands) / sizeof(commands[0]))
@@ -480,6 +483,17 @@ static int cmdPing(int argc, char *argv[]) {
 	(void)argc;
 	(void)argv;
 	CLI_Print("pong\r\n");
+	return 0;
+}
+
+static int cmdGradCal(int argc, char *argv[]) {
+	(void)argc;
+	(void)argv;
+	if (!cc_gradient_calibrate()) {
+		errorNote = "no IMU sample";
+		return 1;
+	}
+	reply("gradient zeroed");
 	return 0;
 }
 

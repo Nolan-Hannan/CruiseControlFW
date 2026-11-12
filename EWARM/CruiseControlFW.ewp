@@ -1109,6 +1109,9 @@
         <file>
           <name>$PROJ_DIR$/../Core/Src/CruiseControl/cc_control.c</name>
         </file>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/CruiseControl/cc_gradient.c</name>
+        </file>
       </group>
       <group>
         <name>SysLib</name>
