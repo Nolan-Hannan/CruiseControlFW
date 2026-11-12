@@ -6,12 +6,11 @@
 #include "sys_time.h"
 #include "sys_flash.h"
 #include "sys_crc.h"
+#include "sys_wdg.h"
 #include "eep_addr.h"
 #include <math.h>
 #include <stddef.h>
 #include <string.h>
-
-extern IWDG_HandleTypeDef hiwdg;
 
 /*
  * Complementary filter time constant. The gyro is trusted for changes faster than this and the
@@ -40,6 +39,7 @@ extern IWDG_HandleTypeDef hiwdg;
 
 static float pitch_offset;    /* radians, saved in flash */
 static float gyro_bias;       /* deg/s, saved in flash */
+static uint8_t cal_valid;     /* TRUE once a calibration is loaded or measured */
 
 static float filtered_gradient;
 static uint8_t filter_seeded;
@@ -66,7 +66,7 @@ static void putLe32(uint8_t *p, uint32_t v) {
 }
 
 static uint8_t loadCalibration(void) {
-	uint8_t rec[EEP_IMU_CAL_REC_SIZE];
+	uint8_t rec[EEP_IMU_CAL_SIZE];
 	float pitch;
 	float bias;
 
@@ -87,8 +87,8 @@ static uint8_t loadCalibration(void) {
 }
 
 static uint8_t saveCalibration(uint8_t samples) {
-	uint8_t rec[EEP_IMU_CAL_REC_SIZE];
-	uint8_t check[EEP_IMU_CAL_REC_SIZE];
+	uint8_t rec[EEP_IMU_CAL_SIZE];
+	uint8_t check[EEP_IMU_CAL_SIZE];
 
 	memset(rec, 0xFF, sizeof(rec)); /* unused bytes are 0xFF */
 	memcpy(&rec[EEP_IMU_ID_OFF], CAL_ID, 4U);
@@ -107,7 +107,8 @@ static uint8_t saveCalibration(uint8_t samples) {
 void cc_gradient_init(void) {
 	pitch_offset = 0.0f;
 	gyro_bias = 0.0f;
-	(void)loadCalibration(); /* stays at zero if nothing valid is stored */
+	/* With nothing valid stored, the gradient stays unhealthy until gradcal is run. */
+	cal_valid = loadCalibration();
 	resetFilter();
 }
 
@@ -115,6 +116,10 @@ void cc_gradient_update(vehicle_data_t *d) {
 	sys_imuData_t imu;
 
 	if (d == NULL) {
+		return;
+	}
+	if (!cal_valid) {
+		vehicle_data_set_error(&d->gradient);
 		return;
 	}
 	if (!sys_imuRead(&imu)) {
@@ -152,7 +157,7 @@ int cc_gradient_calibrate(void) {
 
 	while (good < CAL_SAMPLES && attempts < CAL_MAX_ATTEMPTS) {
 		attempts++;
-		HAL_IWDG_Refresh(&hiwdg);
+		sys_feedWdg();
 		HAL_Delay(CAL_SPACING_MS);
 		if (sys_imuRead(&imu)) {
 			sum_forward += ACC_FORWARD(&imu);
@@ -161,7 +166,7 @@ int cc_gradient_calibrate(void) {
 			good++;
 		}
 	}
-	HAL_IWDG_Refresh(&hiwdg);
+	sys_feedWdg();
 	if (good < CAL_SAMPLES) {
 		return CC_GRADIENT_CAL_ERR_IMU;
 	}
@@ -169,6 +174,7 @@ int cc_gradient_calibrate(void) {
 	/* Average the gravity vector, then take one angle, rather than averaging angles. */
 	pitch_offset = atan2f(sum_forward, sum_up);
 	gyro_bias = sum_rate / (float)good;
+	cal_valid = TRUE;
 	resetFilter();
 
 	return saveCalibration(good) ? CC_GRADIENT_CAL_OK : CC_GRADIENT_CAL_ERR_SAVE;
