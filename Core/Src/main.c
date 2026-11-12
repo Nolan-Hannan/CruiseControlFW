@@ -31,6 +31,7 @@
 #include "sys_info_dac.h"
 #include "sys_imu.h"
 #include "sys_time.h"
+#include "sys_wdg.h"
 #include "cli.h"
 #include "vehicle_data.h"
 
@@ -59,7 +60,7 @@ typedef enum {
 /* USER CODE BEGIN PD */
 
 #define INIT_STEP(stage, call) \
-  do { initStage = (stage); HAL_IWDG_Refresh(&hiwdg); if (!(call)) { Error_Handler(); } } while (0)
+  do { initStage = (stage); sys_feedWdg(); if (!(call)) { Error_Handler(); } } while (0)
 
 /* USER CODE END PD */
 
@@ -220,7 +221,7 @@ int main(void)
     CLI_Process();
 
     /* Once per pass, only after everything above has run. */
-    HAL_IWDG_Refresh(&hiwdg);
+    sys_feedWdg();
   }
   /* USER CODE END 3 */
 }
