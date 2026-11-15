@@ -7,7 +7,7 @@
 #include <math.h>
 #include <stddef.h>
 
-#define PO_PERIOD_MS 1000U
+#define PO_PERIOD_S ((float)PO_PERIOD_MS / 1000.0f)
 
 /* Vehicle model. Placeholders until the car is measured. */
 #define PO_MASS_KG     300.0f
@@ -96,6 +96,28 @@ uint8_t po_solve_speed(float power_w, float gradient_rad, float wind_mps, float 
 	return FALSE;
 }
 
+/*
+ * Planned battery power (Pbattery,nominal), W: the planned SOC drop from the previous
+ * recalculation to this one, as pack energy over one interval. Negative when the plan charges.
+ * At the start of a day there is no previous point, so it uses this one to the next;
+ * with neither in the plan it is 0 W and only the PI term acts.
+ */
+static float planned_power(const world_time_t *now, float planned_now) {
+	const uint32_t step_s = PO_PERIOD_MS / 1000U;
+	world_time_t t;
+	float other;
+
+	sys_worldTimeFromEpoch(now->total_sec - step_s, &t);
+	if (sys_socPlanned(&t, &other)) {
+		return (other - planned_now) / 100.0f * PO_PACK_ENERGY_WH * 3600.0f / PO_PERIOD_S;
+	}
+	sys_worldTimeFromEpoch(now->total_sec + step_s, &t);
+	if (sys_socPlanned(&t, &other)) {
+		return (planned_now - other) / 100.0f * PO_PACK_ENERGY_WH * 3600.0f / PO_PERIOD_S;
+	}
+	return 0.0f;
+}
+
 static void set_invalid(void) {
 	target_valid = FALSE;
 	(void)sys_infoDacSetVolts(0.0f);
@@ -115,6 +137,7 @@ void po_optimizer_update(const vehicle_data_t *d, uint32_t now_ms) {
 	float error;
 	float power;
 	float speed;
+	float v_now;
 
 	if (elapsed_ms < PO_PERIOD_MS) {
 		return;
@@ -129,19 +152,29 @@ void po_optimizer_update(const vehicle_data_t *d, uint32_t now_ms) {
 	/* Above the plan there is energy to spend, below it the car must save. */
 	error = d->battery_soc.value - planned_soc;
 	/* The clamp is the anti-windup. A long gap counts as one period. */
-	integral_w = clampf(integral_w + PO_KI_W_PER_PCT_S * error * ((float)PO_PERIOD_MS / 1000.0f),
+	integral_w = clampf(integral_w + PO_KI_W_PER_PCT_S * error * PO_PERIOD_S,
 	                    -PO_INTEGRAL_MAX_W, PO_INTEGRAL_MAX_W);
+	/* Solar minus aux, plus the planned battery spend, plus the PI correction on SOC error. */
 	power = d->mppt1_power.value + d->mppt2_power.value + d->mppt3_power.value - d->aux_power.value +
-	        PO_KP_W_PER_PCT * error + integral_w;
+	        planned_power(&now, planned_soc) + PO_KP_W_PER_PCT * error + integral_w;
 	power = clampf(power, 0.0f, PO_POWER_MAX_W);
 
 	if (!po_solve_speed(power, d->gradient.value, d->wind_speed.value, d->current_speed.value, &speed)) {
 		set_invalid();
 		return;
 	}
+	/*
+	 * No more than one interval of accel or decel away from the current speed, so the driver
+	 * is not jerked. This can hold the target below PO_SPEED_MIN_MPS while the car is slow.
+	 * The top speed limit still wins.
+	 */
+	v_now = d->current_speed.value;
+	speed = clampf(speed, v_now - PO_MAX_DECEL_MPS2 * PO_PERIOD_S, v_now + PO_MAX_ACCEL_MPS2 * PO_PERIOD_S);
+	speed = clampf(speed, 0.0f, PO_SPEED_MAX_MPS);
+
 	target_speed_mps = speed;
 	target_valid = TRUE;
-	(void)sys_infoDacSetVolts(speed * PO_INFO_V_PER_MPS);
+	(void)sys_infoDacSetVolts(target_speed_mps * PO_INFO_V_PER_MPS); /* the clamped target, not the raw solve */
 }
 
 uint8_t po_optimizer_speed(float *speed_mps) {

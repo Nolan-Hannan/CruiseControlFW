@@ -9,17 +9,29 @@
 extern "C" {
 #endif
 
+/* Recalculation interval, the 10 s starting point from issue #8. Must be a whole number of seconds. */
+#define PO_PERIOD_MS 10000U
+
 /* Speed limits the optimizer may ask for, m/s. Placeholders until the team sets them. */
 #define PO_SPEED_MIN_MPS 8.0f
 #define PO_SPEED_MAX_MPS 29.0f
+
+/* Total pack energy, Wh. Placeholder until the real pack value is known. */
+#define PO_PACK_ENERGY_WH 5000.0f
+
+/* Most the target may differ from the current speed, per second of interval. Placeholders until tuned. */
+#define PO_MAX_ACCEL_MPS2 0.2f
+#define PO_MAX_DECEL_MPS2 0.4f
 
 /* No target, PI integral cleared, info DAC at 0 V. */
 void po_optimizer_init(void);
 
 /*
- * Call once per main loop pass; it does its work once a second. Needs every power optimizer
- * input valid, a valid wall clock and a planned SOC for the current time. Otherwise the
- * target becomes invalid and the info DAC goes to 0 V.
+ * Call once per main loop pass; it does its work once every PO_PERIOD_MS. Needs every power
+ * optimizer input valid, a valid wall clock and a planned SOC for the current time. Otherwise
+ * the target becomes invalid and the info DAC goes to 0 V.
+ * The target is the solved speed held to within PO_MAX_DECEL_MPS2 / PO_MAX_ACCEL_MPS2 times the
+ * interval of the current speed; the info DAC shows that final target.
  */
 void po_optimizer_update(const vehicle_data_t *d, uint32_t now_ms);
 
