@@ -4,6 +4,7 @@
  */
 
 #include "cc_control.h"
+#include "po_optimizer.h"
 #include "sys_adc.h"
 #include "sys_cc_dac.h"
 #include "sys_gpio.h"
@@ -201,9 +202,15 @@ void cc_control_update(cc_state_t state, float measured_speed_mps,
 
             break;
 
-        case CC_STATE_POWER_OPT:
-            // TO BE IMPLEMENTED: keeps MANUAL's target until the optimizer supplies one.
+        case CC_STATE_POWER_OPT: {
+            // Keeps the last target while the optimizer has none.
+            float po_speed_mps;
+            if (po_optimizer_speed(&po_speed_mps)) {
+                target_speed_mps = po_speed_mps;
+                target_valid     = TRUE;
+            }
             break;
+        }
 
         default:
             target_speed_mps = 0.0f;

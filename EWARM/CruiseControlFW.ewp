@@ -1114,6 +1114,12 @@
         </file>
       </group>
       <group>
+        <name>PowerOptimization</name>
+        <file>
+          <name>$PROJ_DIR$/../Core/Src/PowerOptimization/po_optimizer.c</name>
+        </file>
+      </group>
+      <group>
         <name>SysLib</name>
         <file>
           <name>$PROJ_DIR$/../Core/Src/SysLib/sys_adc.c</name>
