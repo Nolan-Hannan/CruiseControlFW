@@ -657,18 +657,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(FORWARD_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : MUX_SEL_Pin */
-  GPIO_InitStruct.Pin = MUX_SEL_Pin;
+  /*Configure GPIO pins : MUX_SEL_Pin RESET_INFO_DAC_Pin */
+  GPIO_InitStruct.Pin = MUX_SEL_Pin|RESET_INFO_DAC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(MUX_SEL_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SPI2_SCSN_Pin SPI1_SCSN_FLASH_Pin SPI1_SCSN_DAC_Pin SPI1_SCSN_IMU_Pin */
   GPIO_InitStruct.Pin = SPI2_SCSN_Pin|SPI1_SCSN_FLASH_Pin|SPI1_SCSN_DAC_Pin|SPI1_SCSN_IMU_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BLUE_Pin GREEN_Pin RED_Pin */
@@ -677,13 +677,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : RESET_INFO_DAC_Pin */
-  GPIO_InitStruct.Pin = RESET_INFO_DAC_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
-  HAL_GPIO_Init(RESET_INFO_DAC_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
