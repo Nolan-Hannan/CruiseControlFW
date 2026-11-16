@@ -5,6 +5,7 @@
 
 #include "defines.h"
 #include "eep_addr.h"
+#include "sys_time.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,6 +51,13 @@ void sys_socAbort(void);
 /* Rechecks the active bank in flash. */
 uint8_t sys_socVerify(void);
 uint8_t sys_socGetInfo(sys_socInfo_t *info);
+
+/*
+ * Planned SOC in percent at time t, interpolated between the 10 s samples. FALSE if there
+ * is no curve, t is outside every planned day, or the stored sample is not 0 to 100 %.
+ * The day headers are taken to be in the same timebase as t (UTC from the wall clock).
+ */
+uint8_t sys_socPlanned(const world_time_t *t, float *soc_percent);
 
 /* Code of the last rejected block, and a short reason for the last failure. */
 uint8_t sys_socLastError(void);
