@@ -182,7 +182,7 @@ void cc_control_update(cc_state_t state, float measured_speed_mps,
             past_speed_mps = current_speed_mps;
             current_speed_mps = measured_speed_mps;
             uint32_t cur_time = sys_getTimeMs();
-            float delta_t = (cur_time - prev_time)/1000;
+            float delta_t = (float)(cur_time - prev_time) / 1000.0f; /* Float division: 50 ms becomes 0.05 s, not 0. */
             prev_time = cur_time;
 
             float error = target_speed_mps - current_speed_mps;

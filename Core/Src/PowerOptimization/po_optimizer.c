@@ -29,7 +29,6 @@
 #define PO_SOLVE_ITERATIONS 30U
 #define PO_SOLVE_TOL_MPS    0.001f
 
-static uint32_t last_run_ms;
 static float integral_w;
 static float target_speed_mps;
 static uint8_t target_valid;
@@ -124,14 +123,12 @@ static void set_invalid(void) {
 }
 
 void po_optimizer_init(void) {
-	last_run_ms = 0U;
 	integral_w = 0.0f;
 	target_speed_mps = 0.0f;
 	set_invalid();
 }
 
 void po_optimizer_update(const vehicle_data_t *d, uint32_t now_ms) {
-	const uint32_t elapsed_ms = now_ms - last_run_ms;
 	world_time_t now;
 	float planned_soc;
 	float error;
@@ -139,10 +136,7 @@ void po_optimizer_update(const vehicle_data_t *d, uint32_t now_ms) {
 	float speed;
 	float v_now;
 
-	if (elapsed_ms < PO_PERIOD_MS) {
-		return;
-	}
-	last_run_ms = now_ms;
+	/* main.c owns the 10 s timer; each call performs one calculation. */
 	if (!validate_po_data(d, now_ms) || !sys_wallClockGet(&wall_clock, now_ms, &now) ||
 	    !sys_socPlanned(&now, &planned_soc)) {
 		set_invalid();

@@ -17,7 +17,7 @@ extern "C" {
 void cc_gradient_init(void);
 
 /*
- * Call once per main loop pass. Reads the IMU, fuses gyro and accelerometer, and writes the
+ * Call every 20 ms from the main loop. Reads the IMU, fuses gyro and accelerometer, and writes the
  * gradient to d->gradient (radians, uphill positive, with the read time in ms). A failed read
  * marks the gradient unhealthy and resets the filter.
  */

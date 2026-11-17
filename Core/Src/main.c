@@ -97,6 +97,12 @@ volatile uint8_t resetByWatchdog = FALSE;
 /* Written only from the main loop. */
 static vehicle_data_t vehicle_data;
 
+/* Starting times for each task update, to be modified*/
+static sys_timer_t speedDataTimer = { .timerLengthMs = 20U };
+static sys_timer_t powerDataTimer = { .timerLengthMs = 250U };
+static sys_timer_t cruiseTimer = { .timerLengthMs = 50U };
+static sys_timer_t optimizerTimer = { .timerLengthMs = PO_PERIOD_MS };
+
 /* UTC clock, anchored by GPS time. Declared extern in sys_time.h. */
 wall_clock_t wall_clock;
 
@@ -192,6 +198,13 @@ int main(void)
   cc_control_init();
   po_optimizer_init();
   INIT_STEP(STAGE_CC_INPUTS, cc_inputs_init(&cc_input_config));
+
+  /* Initialize individual timers */
+  sys_timerInit(&speedDataTimer);
+  sys_timerInit(&powerDataTimer);
+  sys_timerInit(&cruiseTimer);
+  sys_timerInit(&optimizerTimer);
+
   initStage = STAGE_RUNNING;
 
   /* USER CODE END 2 */
@@ -203,14 +216,36 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    /* Time triggered superloop*/
     cc_control_service();
 
-    /* TODO: Ingest CAN into vehicle_data here. Until then speed stays invalid. */
-    cc_gradient_update(&vehicle_data);
+    /* TODO: Drain/decode CAN into a latest-measurement cache each pass, with
+     * bounded work. Keep each frame's rxTimeMs. Signal mappings are still needed. */
+
+    /* Restart due timers to skip missed periods after a long loop pass. */
+    if (sys_checkOutTimerMs(&speedDataTimer)) {
+        sys_timerInit(&speedDataTimer);
+        /* TODO: Publish new cached RPM/speed as current_speed in m/s, keeping
+         * its arrival timestamp. Until connected, real speed stays invalid. */
+        cc_gradient_update(&vehicle_data); // Changed from 100 ms to 20 ms
+    }
+
+    if (sys_checkOutTimerMs(&powerDataTimer)) {
+        sys_timerInit(&powerDataTimer);
+        /* TODO: Publish new cached SOC, MPPT, aux and wind measurements here.
+         * Keep arrival timestamps; reusing an old value must not refresh its age.
+         * Gradient is sampled above at 20 ms to preserve the IMU filter. */
+    }
+
+    if (sys_checkOutTimerMs(&optimizerTimer)) {
+        sys_timerInit(&optimizerTimer);
+        po_optimizer_update(&vehicle_data, sys_getTimeMs());
+    }
+
     const uint32_t now_ms = sys_getTimeMs();
     float measured_speed_mps = vehicle_data.current_speed.value;
     uint8_t speed_valid = validate_cc_data(&vehicle_data, now_ms);
-    po_optimizer_update(&vehicle_data, now_ms);
 
     /* The CLI test stub, when on, replaces the real speed (dry run). */
     float test_speed_mps;
@@ -219,10 +254,18 @@ int main(void)
         speed_valid = TRUE;
     }
 
+    /* Consume button events and check permission every pass. Mode changes and
+     * loss of valid feedback must not wait for the normal 50 ms control period. */
     cc_inputs_t inputs = cc_inputs_update();
+    const cc_state_t previous_state = cc_state_get();
     cc_state_update(inputs.mode_pressed,
                     inputs.cruise_allowed && speed_valid);
-    cc_control_update(cc_state_get(), measured_speed_mps, speed_valid);
+    const cc_state_t state = cc_state_get();
+    const uint8_t cruise_due = sys_checkOutTimerMs(&cruiseTimer);
+    if (cruise_due || state != previous_state) {
+        sys_timerInit(&cruiseTimer);
+        cc_control_update(state, measured_speed_mps, speed_valid);
+    }
 
     CLI_Process();
 

@@ -137,12 +137,16 @@ int main(void) {
 	/* The top speed limit beats the decel limit. */
 	assert(run(40.0f, 90.0f) == PO_SPEED_MAX_MPS);
 
-	/* Nothing runs before one interval has passed. */
+	/* The main loop owns timing; every explicit call computes, even early in uptime. */
 	vehicle_data_init(&d);
 	po_optimizer_init();
-	fill(&d, flat, 50.0f, PO_PERIOD_MS - 1U);
-	po_optimizer_update(&d, PO_PERIOD_MS - 1U);
 	assert(!po_optimizer_speed(&v));
+	fill(&d, flat, 50.0f, 1U);
+	po_optimizer_update(&d, 1U);
+	assert(po_optimizer_speed(&v) && near(v, flat));
+	fill(&d, flat, 51.0f, 2U);
+	po_optimizer_update(&d, 2U);
+	assert(po_optimizer_speed(&v) && v > flat + 0.1f);
 
 	/* A stale input, a bad clock or a missing plan each drop the target and zero the display. */
 	(void)run(flat, 50.0f);

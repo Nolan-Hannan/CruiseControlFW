@@ -21,7 +21,7 @@ void sys_timerInit(sys_timer_t *timer);
 
 uint32_t sys_getTimeUs(void);
 uint32_t sys_getTimeMs(void);
-void sys_delayUs(uint32_t us);
+void     sys_delayUs(uint32_t us);
 
 /* UTC. The calendar fields and total_sec are the same time; only the helpers write them. */
 typedef struct {
