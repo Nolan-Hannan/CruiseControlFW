@@ -18,7 +18,7 @@
  * estimate. This is also the exponential smoothing on the accelerometer angle.
  */
 #define GRADIENT_TAU_S      2.0f
-#define GRADIENT_MAX_DT_S   0.1f  /* a longer gap between good samples restarts the filter */
+#define GRADIENT_MAX_DT_S   0.1f  /* a longer gap between good samples restar ts the filter */
 
 #define CAL_SAMPLES         50U
 #define CAL_SPACING_MS      10U   /* the IMU makes a new sample every 10 ms */
