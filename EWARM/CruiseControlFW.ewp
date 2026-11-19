@@ -1092,6 +1092,9 @@
           <name>$PROJ_DIR$/../Core/Src/vehicle_data.c</name>
         </file>
         <file>
+          <name>$PROJ_DIR$/../Core/Src/can_dispatch.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$/../Core/Src/stm32f4xx_it.c</name>
         </file>
         <file>

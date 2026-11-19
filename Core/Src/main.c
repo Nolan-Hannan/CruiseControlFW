@@ -26,6 +26,7 @@
 #include "cc_control.h"
 #include "sys_uart.h"
 #include "sys_can.h"
+#include "can_dispatch.h"
 #include "sys_flash.h"
 #include "sys_cc_dac.h"
 #include "sys_info_dac.h"
@@ -186,6 +187,8 @@ int main(void)
   }
   INIT_STEP(STAGE_CLI, CLI_Init());
   vehicle_data_init(&vehicle_data);
+  /* TODO: Pass a static route table once device IDs and handlers are verified. */
+  can_dispatch_init(NULL, 0U);
   sys_wallClockInit(&wall_clock);
   cc_gradient_init();
   cc_state_init();            // Initialize cc state
@@ -205,7 +208,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
     cc_control_service();
 
-    /* TODO: Ingest CAN into vehicle_data here. Until then speed stays invalid. */
+    (void)can_dispatch_process(&vehicle_data);
     cc_gradient_update(&vehicle_data);
     const uint32_t now_ms = sys_getTimeMs();
     float measured_speed_mps = vehicle_data.current_speed.value;
